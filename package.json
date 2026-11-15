@@ -1,0 +1,12 @@
+{
+  "name": "ca-bot-cron",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "scan": "node scan.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
