@@ -675,10 +675,21 @@ async function runScanForMode(modeName) {
         }));
         const live = candles["5m"]?.[candles["5m"].length - 1]?.c || 0;
         if (!live) return;
-        const sig = signalFrom(candles, live, m);
-        if (sig && sig.signal !== "NEUTRAL") {
-          results[m.coin] = { ...sig, coin: m.coin, assetClass: m.assetClass };
-        }
+       const sig = signalFrom(candles, live, m);
+if (sig) {
+  results[m.coin] = { ...sig, coin: m.coin, assetClass: m.assetClass };
+} else if (live) {
+  // signalFrom returned null — still show coin in watchlist with NEUTRAL
+  results[m.coin] = {
+    coin: m.coin,
+    assetClass: m.assetClass,
+    signal: "NEUTRAL",
+    confidence: "LOW",
+    score: 0,
+    price: live,
+    why: "Insufficient data for analysis",
+  };
+}
       } catch (e) {
         console.error(`  ${m.coin}: ${e.message}`);
       }
