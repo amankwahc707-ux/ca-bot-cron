@@ -315,7 +315,7 @@ function checkFastTrigger(T, price, a5, volR, rsi5, rsi1, meta) {
       const risk = stop - price;
       if (risk > 0 && risk < a5 * 2) {
         const tp1 = price - risk, tp2 = price - 2 * risk;
-        return { signal: "SELL", setup: "FAST_BREAKDOWN", confidence: (volRatio20 >= mode.fastVolSurge * 1.5 ? "CERTAIN" : "CONFIDENT"), score: mode.scoreBuy, price, entry: price, stop, tp1, tp2, atr: a5, why: `⚡ Fast bear: ${volRatio20.toFixed(1)}x vol`, gatesPassed: 7, gatesTotal: 7, soft: 0, trend: T, fast: true, trigger_tf: "5m", highest_tf: "5m" };
+       return { signal: "SELL", setup: "FAST_BREAKDOWN", confidence: (volRatio20 >= mode.fastVolSurge * 1.5 ? "CERTAIN" : "CONFIDENT"), score: computeBearScore(T, price, a5, T["5m"].adx || 0, volR, rsi5 || 50), price, entry: price, stop, tp1, tp2, atr: a5,
       }
     }
   }
@@ -325,7 +325,7 @@ function checkFastTrigger(T, price, a5, volR, rsi5, rsi1, meta) {
       const risk = price - stop;
       if (risk > 0 && risk < a5 * 2) {
         const tp1 = price + risk, tp2 = price + 2 * risk;
-        return { signal: "BUY", setup: "FAST_BREAKOUT", confidence: (volRatio20 >= mode.fastVolSurge * 1.5 ? "CERTAIN" : "CONFIDENT"), score: mode.scoreBuy, price, entry: price, stop, tp1, tp2, atr: a5, why: `⚡ Fast bull: ${volRatio20.toFixed(1)}x vol`, gatesPassed: 13, gatesTotal: 13, soft: 0, trend: T, fast: true, trigger_tf: "5m", highest_tf: "5m" };
+       return { signal: "BUY", setup: "FAST_BREAKOUT", confidence: (volRatio20 >= mode.fastVolSurge * 1.5 ? "CERTAIN" : "CONFIDENT"), score: computeBullScore(T, T["5m"].adx || 0, volR, true, true), price, entry: price, stop, tp1, tp2, atr: a5,
       }
     }
   }
