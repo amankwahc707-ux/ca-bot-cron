@@ -207,8 +207,45 @@ async function fetchBiquoteCandles(symbol, interval, lookback = 250) {
     }));
   } catch (e) { clearTimeout(timeoutId); throw e; }
 }
+async function fetchOKXCandles(symbol, interval, lookback = 250) {
+  const okxIv = { "5m": "5m", "15m": "15m", "1h": "1H", "4h": "4H", "1d": "1D" }[interval] || "5m";
+  const instId = symbol + "-USDT";
+  const url = `https://www.okx.com/api/v5/market/candles?instId=${instId}&bar=${okxIv}&limit=${Math.min(lookback, 300)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`OKX HTTP ${r.status}`);
+    const data = await r.json();
+    if (data.code !== "0") throw new Error(`OKX ${data.code}: ${data.msg || "unknown"}`);
+    const list = data.data || [];
+    return list.reverse().map(c => ({
+      t: +c[0],
+      T: +c[0] + IV_MS[interval],
+      o: +c[1],
+      h: +c[2],
+      l: +c[3],
+      c: +c[4],
+      v: +c[5]
+    }));
+  } catch (e) {
+    console.error(`OKX ${symbol} ${interval}:`, e.message);
+    throw e;
+  }
+}
+
 async function fetchCandles(coin, interval, lookback = 320) {
-  if (getAssetClass(coin) === "CRYPTO") return fetchBybitCandles(coin, interval, lookback);
+  if (getAssetClass(coin) === "CRYPTO") {
+    // 🆕 Try OKX first (works from GitHub Actions IPs), Bybit as fallback
+    try {
+      return await fetchOKXCandles(coin, interval, lookback);
+    } catch (e) {
+      try {
+        return await fetchBybitCandles(coin, interval, lookback);
+      } catch (e2) {
+        console.warn(`Both OKX and Bybit failed for ${coin} ${interval}`);
+        return null;
+      }
+    }
+  }
   return fetchBiquoteCandles(coin, interval, lookback);
 }
 const candleCache = new Map();
