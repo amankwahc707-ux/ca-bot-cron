@@ -14,11 +14,33 @@ const HEARTBEAT_STALE_MS = 2 * 60 * 1000;
 async function writeGlobalSignals(signalsByMode) {
   const batch = db.batch();
   for (const [mode, signals] of Object.entries(signalsByMode)) {
+    // 🆕 Strip heavy fields (trend contains 250-candle arrays per timeframe)
+    const lightCoins = {};
+    for (const [coin, sig] of Object.entries(signals.coins || {})) {
+      const light = { ...sig };
+      delete light.trend;
+      delete light.candles;
+      delete light.closes;
+      delete light.e20s;
+      delete light.e50s;
+      delete light.e20;
+      delete light.e50;
+      delete light.e200;
+      lightCoins[coin] = light;
+    }
+    
+    const lightSignals = {
+      coins: lightCoins,
+      watchlist: signals.watchlist || Object.keys(lightCoins),
+      lastScan: signals.lastScan,
+      mode: signals.mode,
+    };
+    
     const docRef = db.doc(`global/signals_${mode}`);
     batch.set(docRef, {
-      json: JSON.stringify(signals),
+      json: JSON.stringify(lightSignals),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      coin_count: Object.keys(signals.coins || {}).length,
+      coin_count: Object.keys(lightCoins).length,
     });
   }
   await batch.commit();
